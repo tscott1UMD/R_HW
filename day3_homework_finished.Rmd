@@ -1,0 +1,88 @@
+---
+title: "Day 3 Homework"
+output: html_document
+---
+
+The goal of this homework is to get practice with manipulating data.
+
+1. Make both a "wide" and a "long" version of your data
+
+```{r}
+pathbase0
+pathbasesub <- c(pathbase0$CASEID, pathbase0$LINEID, pathbase0$S0SROPRV, pathbase0$S0SROFRQ, pathbase0$S0EVRUSE, pathbase0$S0AGE, pathbase0$S0PCL114, pathbase0$S0FUTURE, pathbase0$S0IMPULS, pathbase0$S0PSMI)
+melt.pathbasewide <- melt(pathbasesub, id.vars = c("CASEID", "LINEID"), measure.vars = c( pathbase0$CASEID, pathbase0$LINEID, pathbase0$S0SROPRV, pathbase0$S0SROFRQ, pathbase0$S0EVRUSE, pathbase0$S0AGE, pathbase0$S0PCL114, pathbase0$S0FUTURE, pathbase0$S0IMPULS, pathbase0$S0PSMI))
+head(melt.pathbasewide)
+
+# I encountered about 10 different error messages in the hour I spent trying to get this to work. I could not find a way. 
+
+summary(pathbase0$S0SROPRV)
+summary(pathbase0$S0SROFRQ)
+summary(pathbase0$S0EVRUSE)
+summary(pathbase0$S0AGE)
+summary(pathbase0$S0PCL114)
+summary(pathbase0$S0FUTURE)
+summary(pathbase0$S0IMPULS)
+summary(pathbase0$S0PSMI)
+```
+
+2. Transform a variable
+
+```{r}
+summary(pathbase0$S0SROFRQ)
+pathbase0SROfreq <- pathbase0$S0SROFRQ + .0000001
+pathbase0SROfreq_log <- log(pathbase0$S0SROFRQ)
+summary(pathbase0SROfreq_log)
+hist(pathbase0SROfreq_log)
+```
+
+3. Recode a factor
+
+```{r}
+summary(pathbase0$S0ETHN_R)
+levels(pathbase0$S0ETHN_R) <- c("White", "Black", "Hispanic", "Other")
+levels(pathbase0$S0ETHN_R)
+pathbase0$white <- pathbase0$S0ETHN_R == "White"
+pathbase0$nonwhite <- pathbase0$S0ETHN_R == "Black" | pathbase0$S0ETHN_R == "Hispanic" | pathbase0$S0ETHN_R == "Other"
+summary(pathbase0$white)
+summary(pathbase0$nonwhite)
+```
+
+4. Add a new factor, where the levels are conditional on the values of some other variable. E.g., a factor of "high", "medium", and "low" based on thresholds for another variable.
+
+```{r}
+summary(pathbase0$S0AGE)
+pathbase0$under17 <- pathbase0$S0AGE == 14 | pathbase0$S0AGE == 15 | pathbase0$S0AGE == 16
+pathbase0$S0AGE <- factor(pathbase0$S0AGE, levels = c("1", "2"))
+summary(pathbase0$S0AGE)
+```
+
+# I failed. I spent a lot of time trying to learn more about factors and what you do with them, but I still do not have a strong understanding. Mostly I think I am struggling with levels, what they are, how you make them, etc.  
+
+5. Reorder the levels of this new factor
+
+# Since I could not get the question above to work out, I reorded another factor in the data
+
+```{r}
+levels(pathbase0$S0INTLOC)
+pathbase0$S0INTLOC <- relevel(pathbase0$S0INTLOC, ref = "(2) Detention center, jail, or other locked facility") 
+levels(pathbase0$S0INTLOC)
+```
+
+6. Choose a factor that could be re-coded as multiple dimensions (recall the sepal/petal vs. length/width breakdown). If you don't have one, try to create one.  Now create two (or more) new factors that represent these dimensions.
+```{r}
+levels(pathbase0$S0FAMSTR)
+pathbase0$bothparents <- pathbase0$S0FAMSTR == "(01) Two bio parents"
+pathbase0$mom <- pathbase0$S0FAMSTR == "(02) Single bio mom, never married" | pathbase0$S0FAMSTR == "(03) Single bio mom, divorced or separated" | pathbase0$S0FAMSTR == "(04) Single bio mom, widowed"  | pathbase0$S0FAMSTR ==  "(05) Bio mom and stepdad" |pathbase0$S0FAMSTR == "(12) Single bio mom, married, bio dad not present" |pathbase0$S0FAMSTR == "(13) Single bio mom, marital status unknown"
+pathbase0$dad <- pathbase0$S0FAMSTR == "(06) Single bio dad"  | pathbase0$S0FAMSTR == "(08) Bio dad and stepmom"  
+pathbase0$otherguardian <- pathbase0$S0FAMSTR ==  "(11) Other" | pathbase0$S0FAMSTR ==  "(10) No adult in the home" | pathbase0$S0FAMSTR ==  "(09) Two adoptive parents" | pathbase0$S0FAMSTR == "(07) Other adult relative"
+```
+# this keeps happening to me. I make these new variables but they are always logical not factors. as.factor does not seem to be working 
+ 
+7. Using `dcast`, aggregate some variable into "cell means" of some kind.
+
+```{r}
+pathbase0.cast <- dcast(melt.pathbasewide, ID ~ c(CASEID, LINEID), value.var = c(pathbase0$CASEID, pathbase0$LINEID, pathbase0$S0SROPRV, pathbase0$S0SROFRQ, pathbase0$S0EVRUSE, pathbase0$S0AGE, pathbase0$S0PCL114, pathbase0$S0FUTURE, pathbase0$S0IMPULS, pathbase0$S0PSMI), fun.aggregate = mean)
+```
+# crazy error message because I was not able to successfully melt the data into a long format 
+
+8.  Save all of the above in a well-documented R Markdown document.  Email me the .Rmd file (and if you use different or updated data from Day 2 Homework, send that to me, too).
