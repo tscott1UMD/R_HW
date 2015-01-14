@@ -1,0 +1,103 @@
+---
+title: "Day 7 Homework"
+output: html_document
+---
+
+1. Work on making progress on your Final Project.
+
+# Tonight I am reading about the fda package in R and the techniques I am going to try to use
+
+2. Document some road blocks you are running into.
+
+# I have spent most of my time cleaning and settign up my data. Two important issues I faced was merging all 11 datasets into one longitudinal file, and making that file in long format. I was able to merge successfully (see code below) but after numerous hours, I have still be unable to successfully melt the longitudinal data file. I tried just the numeric data, but it is just showing the last follow-up period, despite saying there are 8,855,160 observations (see code below). 
+
+#merge and follow-up indicator variables
+```{r}
+pathbase0 <- da29961.0001
+pathbase0$time <- 0
+pathbase0$followup <- "baseline"
+
+
+pathbase06 <- da29961.0002
+pathbase06$time <- 6
+pathbase06$followup <- "6-month"
+
+pathbase12 <- da29961.0003
+pathbase12$time <- 12
+pathbase12$followup <- "12-month"
+
+pathbase18 <- da29961.0004
+pathbase18$time <- 18
+pathbase18$followup <- "18-month"
+
+pathbase24 <- da29961.0005
+pathbase24$time <- 24
+pathbase24$followup <- "24-month"
+
+pathbase30 <- da29961.0006
+pathbase30$time <- 30
+pathbase30$followup <- "30-month"
+
+pathbase36 <- da29961.0007
+pathbase36$time <- 36
+pathbase36$followup <- "36-month"
+
+pathbase48 <- da29961.0008
+pathbase48$time <- 48
+pathbase48$followup <- "48-month"
+
+pathbase60 <- da29961.0009
+pathbase60$time <- 60
+pathbase60$followup <- "60-month"
+
+pathbase72 <- da29961.0010
+pathbase72$time <- 72
+pathbase72$followup <- "72-month"
+
+pathbase84 <- da29961.0011
+pathbase84$time <- 84
+pathbase84$followup <- "84-month"
+
+# my first try (didn't work)
+
+pathbaseall <- merge(pathbase0, pathbase06, by = "CASEID", all = TRUE)
+pathbaseall1 <- merge(pathbaseall, pathbase12, by = "CASEID", all = TRUE)
+pathbaseall2 <- merge(pathbaseall1, pathbase18, by = "CASEID", all = TRUE) 
+pathbaseall3 <- merge(pathbaseall2, pathbase24, by = "CASEID", all = TRUE)
+pathbaseall4 <- merge(pathbaseall3, pathbase30, by = "CASEID", all = TRUE)
+pathbaseall5 <- merge(pathbaseall4, pathbase36, by = "CASEID", all = TRUE)
+pathbaseall6 <- merge(pathbaseall5, pathbase48, by = "CASEID", all = TRUE)
+pathbaseall7 <- merge(pathbaseall6, pathbase60, by = "CASEID", all = TRUE)
+pathbaseall8 <- merge(pathbaseall7, pathbase72, by = "CASEID", all = TRUE)
+pathbase_all <- merge(pathbaseall8, pathbase84, by = "CASEID", all = TRUE)
+
+# my second try (also didn't work)
+
+run.seq <- function(x) as.numeric(ave(paste(x), x, FUN = seq_along))
+
+L <- list(pathbase0, pathbase06, pathbase12, pathbase18, pathbase24, pathbase30, pathbase36, pathbase48, pathbase60, pathbase72, pathbase84)
+L2 <- lapply(L, function(x) cbind(x, run.seq = run.seq(((x$time)))))
+out <- Reduce(function(...) merge(..., all = TRUE), L2)[-2]
+
+```
+
+# Attempt at melting the longitudinal data file (only numeric variables). Unsurprisingly, it also did not work 
+```{r}
+
+
+numeric.cols <- rep(NA, ncol(out))
+for(colnum in 1:ncol(out)) {
+  numeric.cols[colnum] <- is.numeric(out[, colnum])
+}
+numeric.cols[1:20]
+
+pathbase_numeric <- out[, numeric.cols]
+
+pathbase_all.long <- melt(pathbase_numeric, id.vars = c("CASEID", "time"))
+colnames(pathbase_all)
+head(pathbase_all_num.long)
+tail(pathbase_all_num.long)
+pathbase_all$time
+```
+
+3. Email them to me before 7am tomorrow with your interests for special topics day. 

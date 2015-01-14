@@ -1,0 +1,81 @@
+---
+title: "Day 4 Homework"
+output: html_document
+---
+
+1. Change the column names of your data to something easier to work with.  If you like your column names, change them into something else reasonable, just for practice.
+
+```{r}
+
+load("~/Desktop/School/R/Final Project/Pathways data/baseline.rda")
+pathbase <- da29961.0001
+pathbasesub <- da29961.0001[1:14]
+oldnames <- colnames(pathbasesub)
+mycolnames <- c("CASEID", "LINEID", "INTERVIEWYR", "VERSION#", "INTERVIEWLOCATION", "FACILITYCODE", "FACILITYTYPE", "STATE", "AGE", "AGE2", "RACE", "RACE2", "GENDER", "USBORN")
+colnames(pathbasesub) <- mycolnames
+colnames(pathbasesub)
+
+```
+
+
+2. List ALL the issues you can see where it looks like your data is being read in a weird way.  If your data looks perfect, find some way to mess it up :-)
+
+head(pathbasesub)[1:20, ]
+tail(pathbasesub)
+pathbasesub$FACILITYCODE
+# The facility code variable is masked in this dataset and the facility type variable has a lot of NAs. Since I'm not worried about the missing data right now, I'm going to get rid of the the unusable facilitycode variable
+
+3. Pick one or two of the most egregious or problematic of the issues in #2 and fix them.
+
+```{r}
+
+pathbasesub$FACILITYCODE <- NULL
+
+
+```
+
+
+4. Check for NAs, and report where you see them (try to pinpoint where they are, not just "5 NAs in column seven".
+
+is.na(pathbasesub$FACILITYTYPE)[1:10]
+#Since there are so many observations, I just examined the first 10 rows. One can see that observations 4, 5, 7, and 8 of this subset are missing data on the type of facility. 
+
+
+5. Decide what you think you should do about the NAs, and say why.  If you can, try to implement this decision.
+
+#There is nothing I can do about the NAs. I do not want to drop them from the dataset, but when I run descriptive statistics I will just listwise delete them. 
+
+
+6. Remove any problematic rows and/or columns.  Say why you want to remove them.  If there aren't any problems, describe why you think there are no problems.
+
+#I'm not sure why there would be problematic rows. I already nulled the facility code variabel because it was masked, and I will do the same for the Race and Age2 variables since they are also masked.
+
+```{r}
+pathbasesub$AGE2 <- NULL
+pathbasesub$RACE <- NULL
+head(pathbasesub)
+```
+
+
+7. Re-code at least one factor.  Provide a table that shows the correspondence between old levels and new levels.
+
+```{r}
+head(pathbasesub)
+levels(pathbasesub$FACILITYTYPE)
+levels(pathbasesub$FACILITYTYPE) <- c("residential", "supervised", "locked", "detained", "other")
+head(pathbasesub$FACILITYTYPE)
+```
+
+8. Run TWO DIFFERENT simple analyses or statistical tests, such as linear regression (`lm()`), logistic regression (`glm()`), correlation test (`cor.test()`), t-test (`t.test()`), or non-parametric tests (e.g., `wilcox.test()`).  For each of these:
+  - Describe why you are doing this analysis, i.e., what question is it answering?
+  - I won't judge you on statistical expertise!  (though I will make comments if I think I can be helpful)
+  - Report some key statistics from the analysis, using inline code
+  
+logresults <- glm(S0HEADIN ~ S0NEARPRO + S0SGEND, family = "binomial", data = pathbase)
+summary(logresults)
+# Here I test whether evincing early problematic behavior and gender affect the liklihood of ever sustaining a head injury. The results indicate that each additional problematic behavior the teen had as a child is associated with a .23 increase in the log likelihood of sustaining a head injury in their life. Females are less likely to report suffering a head injury. Both of these results are significant below a 0.001 threshold. Finally, males who did not report any problem behaviors as a child had a -1.144 log likelihood of reporting a head injury. 
+  
+linresults <- lm(S0SROFRQ ~ S0AGE, data = pathbase)
+summary(linresults)
+# I am testing one of the oldest findings in criminology, that age is positively related to criminal offending (as measured by the frequency of self-reported crimes) during adolescence. Looking at my findings, a one year increase in age results in a reported increase of 40 crimes during the refernece period. The standard error is around 9 crimes, and the t value is significant at 0. The intercept in uniterpretable since it is outside the range of the data. 
+  
