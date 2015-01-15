@@ -12,6 +12,9 @@ pathbase0 %>%
   group_by(pathbase0$S0SGEND) %>%
   summarise(mean = mean(S0SROFRQ))
 #for some reason this makes R abort with a bomb signal. I have never seen that before.
+getwd()
+setwd("~/Desktop/R_HW")
+![picture of error message](ScreenShot.jpeg)
 ```
 
 2. Find another kind of analysis/transformation/summary stat that you want to apply across multiple groups in your data. Use the functions from `reshape2` and `dplyr` to get these results.
