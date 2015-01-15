@@ -20,10 +20,11 @@ setwd("~/Desktop/R_HW")
 2. Find another kind of analysis/transformation/summary stat that you want to apply across multiple groups in your data. Use the functions from `reshape2` and `dplyr` to get these results.
 
 ```{r}
-
+library(dplyr)
 pathbase0 %>%
-  group_by(S0ETHN_R) %>%
-  summarize(mean = mean(S0SRO6))
+  group_by(CASEID, S0INTLOC_FACTYPE) %>%
+  summarize(S0SAGE)
+
 ```
 
 # This also destroyed my work and exited out of R. Another issue is I have about 6 different longitudinal files, some numeric only some not, and none of them are acting properly. 
