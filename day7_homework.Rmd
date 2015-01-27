@@ -76,7 +76,8 @@ pathbase_all <- merge(pathbaseall8, pathbase84, by = "CASEID", all = TRUE)
 run.seq <- function(x) as.numeric(ave(paste(x), x, FUN = seq_along))
 
 L <- list(pathbase0, pathbase06, pathbase12, pathbase18, pathbase24, pathbase30, pathbase36, pathbase48, pathbase60, pathbase72, pathbase84)
-L2 <- lapply(L, function(x) cbind(x, run.seq = run.seq(((x$time)))))
+merge_attempt<-ldply(L, id.vars = c("CASEID", "time"))
+L2 <- lapply(L, function(x) cbind(x, run.seq = run.seq(c(x$time, x$CASID))))
 out <- Reduce(function(...) merge(..., all = TRUE), L2)[-2]
 
 ```

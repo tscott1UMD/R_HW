@@ -1,0 +1,68 @@
+---
+title: "TomScott_FinalProj"
+output: html_document
+---
+
+# In the analysis presented below, I present the code and results for an analysis I conducted using longitduincal data from the Pathways to Desistance study, a popular dataset used in the field of criminology. I used the 84-month longitudinal datasetin long format. 
+
+# Below I examine the two variables I will be using to generate an average "age-crime curve." Age has proved to be the strongest predictor of crime, with crime increasing in early adolescence then declining steadily into adulthood (see histogram). Despite many portrayals of an average curve, these representations are limited because they ignore the differences in the timing of each individual's age-crime curve (phase variability).Ignoring phase variability reduces the variability of the mean curve compared to the individual curves, and can increase the duration of salient features of the curve. A solution to this problem is to treat the growth curves as functional data, and align their timing using curve registration. 
+```{r}
+summary(longitudinal_long$SROvar)
+summary(longitudinal_long$age)
+longitudinal_long$SROvar[longitudinal_long$SROvar < 0] <- NA
+longitudinal_long$age[longitudinal_long$age < 0] <- NA
+plot(longitudinal_long$age, longitudinal_long$SROvar, type = "h")
+longitudinal_long_complete <- subset(longitudinal_long, !is.na(age))
+longitudinal_long_complete2 <- subset(longitudinal_long_complete, !is.na(SROvar))
+longitudinal_long_complete7 <- longitudinal_long_complete2[ which(longitudinal_long_complete2$age < 26),]
+library(fda)
+library(uniReg)
+```
+
+
+# After listwise deleting the NA's from my two variables and removing the 2 cases who were 26 in the last follow-up, I plot a histogram of the age-crime growth rate. The first step to curve registration requires turning your individual data into functional data (your data becomes functions for each individuals growth curve). This is accomplished through basis functions. Since the age-crime curves are unimodal, I try a package that uses B-splines (because the data is nonperiodic) to fit the data to using a unimodal distribution. Examining a plot, it appears to have done this successfully. 
+```{r}
+plot(longitudinal_long_complete7$age, longitudinal_long_complete7$SROvar, type = "h")
+unimodal.fit<- unireg(longitudinal_long_complete7$age, longitudinal_long_complete7$SROvar, w = NULL, sigma = NULL, a=14, b=25, g=10, k=3, constr = "unimodal", penalty = "diff")
+unicurve <- plot(unimodal.fit$x, unimodal.fit$fitted.values, type = "l")
+unimodal.fit$sigma
+```
+
+
+# The next step is to use spline smoothing to fit the data to estimated curves using the basis I just set up. Unfortunately, it does not look like the unimodal basis is compatible with the "fda" packages that allows me to transmit the individual data to functional data. Thus I use the fully nonparametric b-spline basis system that is inherent to the fda package. Once I created the basis, I use the smoothing function to compute the growth curves as functional data (see plot of smoothedcurves for these growth curves). I then plot the mean of these curves to obtain an average growth in crime over age for the entire sample. Again, though, this average curve does not account for variability in the timing of these curves. To do that I must warp the time scale to allow the events to align around the same periods. 
+```{r}
+agelength = c(14,25)
+bspline <- create.bspline.basis(agelength, 10)
+basismatrix = predict(bspline, agelength)
+srofd = smooth.basis(longitudinal_long_complete7$age, longitudinal_long_complete7$SROvar, bspline)
+smoothedcurves <- plot(srofd$fd, longitudinal_long_complete7$age)
+smoothedMcurve <- plot(srofd$fd)
+```
+
+
+# Below I use the basis and smoothing spline to conduct curve registration. The register.fd function uses each curve to compute the registered curves, a warping function that changes the time scale, and functions defining the warping function. I plot the registered curves and the mean registered curve. Although I was finally able to get the curves to register, I am unsure of what the results are showing. The registered curves look nothing like the unregistered curves, and registered values of the amplitude of offending are oustide the range of SROvar. I looked up numerous examples of the warping function and my code seems correct. I have e-mailed the individual who created the package in an attempt to see where I may have gone wrong. Below the plots I show the function to separate and examine the variation in the curves due to amplitude and phase variability. It suggests that 100% of the variation in the curves is due to phase variability, which is obviously inaccurate, and must result from something going wrong in the registration process.    
+```{r}
+Wfd0CR = fd(matrix(14,10,1354),bspline)
+WfdParCR = fdPar(Wfd0CR, 1, 1)
+regList = register.fd(mean(srofd$fd), Wfd0CR, WfdParCR)
+regcurve = regList$regfd # A functional data object for the registered curves
+warpfdCR = regList$warpfd # A Functional data object for warping functions h
+WfdCR = regList$Wfd # A Functional data object for functions W defining warping fns
+plot(regcurve)
+plot(mean(regcurve))
+AmpPhasList <- AmpPhaseDecomp(Wfd0CR, regcurve, warpfdCR, rng=agelength)
+RSQR = AmpPhasList$RSQR
+RSQR
+```
+
+# Below I created a pdf file of the histogram I made to examine individual changes in offending over age for my sample, the average unimodal smoothed curve, the average smoothed spline curve, the smoothed spline curves for the entire sample, and finally plots of individual and the mean registered curves
+```{r}
+pdf("TScottregplots.pdf")
+plot(longitudinal_long_complete7$age, longitudinal_long_complete7$SROvar, type = "h")
+unicurve <- plot(unimodal.fit$x, unimodal.fit$fitted.values, type = "l")
+smoothedMcurve <- plot(srofd$fd)
+smoothedcurves <- plot(srofd$fd, longitudinal_long_complete7$age)
+plot(regcurve)
+plot(mean(regcurve))
+dev.off()
+```
